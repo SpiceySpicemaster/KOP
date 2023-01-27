@@ -109,11 +109,20 @@ def main():
             A = (g ** a) % p
 
             c.send(str(g).encode())
+            print(g)
+            print()
             c.send(str(p).encode())
+            print(p)
+            print()
             c.send(str(A).encode())
+            print(A)
+            print()
             B = int(c.recv(10000).decode())
+            print(B)
+            print()
 
             session_keys[addr] = (B**a) % p
+            print(session_keys[addr])
             generate_key(session_keys[addr],addr)
 
         else:

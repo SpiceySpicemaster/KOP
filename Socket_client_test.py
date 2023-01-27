@@ -10,6 +10,7 @@ port = 1200
 session_key = None
 #s.connect((ip,port))
 
+
 def generate_key(seed): #Client side is a bit different,it doesn't need a name.
     key, duals = create_key(ASCIIchars(), seed)
     c = open('cli_KEY.txt', 'w')
