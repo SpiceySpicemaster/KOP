@@ -8,6 +8,32 @@ getcontext().prec = 10000000000000000
 
 # v3 feature - Seedable key generation, hopefully good (probs not tho lol)
 # v4 reature - Special characters like \t \n ect. don't fuck up the program anymore
+def recv_msg(c,debug=0):
+    incoming = ''
+    while len(incoming) < 32:
+        incoming += c.recv(1).decode()
+    if debug == 1:
+        print('i:', incoming)
+    if len(incoming) != 32:
+        print('DATA SCATTERED OVER THE NETWORK, PLS FIX UR DAMN PROTOCOL TO ACCOUNT FOR DIS!!!!!1')
+        raise ValueError
+
+    padding = int(incoming, base=2)
+    rcvd_msg = ''
+
+    while padding != 0:
+        tmp = c.recv(1).decode()
+        padding -= 1
+        rcvd_msg += tmp
+    if debug == 1:
+        print('r:', rcvd_msg)
+    return rcvd_msg
+def send_msg(c,msg,debug=0):
+    padding = '0'*(32-len(bin(len(msg))[2:])) + bin(len(msg))[2:]
+    msg = padding + msg
+    if debug == 1:
+        print('s:', msg)
+    c.sendall(msg.encode())
 
 def browseFiles():
     def gib():
@@ -111,26 +137,12 @@ def encrypt_and_send(text,addr,recipent):
     #print(' '.join(text), end=' ')
     #print(ret,duals)
 
-    duals.append('duals_')
-    recipent.send(' '.join(duals).encode())
-    recipent.send(ret.encode())
-
+    send_msg(recipent, ' '.join(duals))
+    send_msg(recipent, ret)
 
 def decrypt_and_recieve(addr,sender):
-    r1 = sender.recv(4096).decode()
-    r2 = sender.recv(4096).decode()
-
-    try:
-        if r1[len(r1)-6]+r1[len(r1)-5]+r1[len(r1)-4]+r1[len(r1)-3]+r1[len(r1)-2]+r1[len(r1)-1] == 'duals_':
-            duals = r1.split(' ')
-            rcv = r2
-        else:
-            duals = r2.split(' ')
-            rcv = r1
-    except IndexError:
-        duals = r2.split(' ')
-        rcv = r1
-    del(duals[len(duals)-1])
+    duals = recv_msg(sender)
+    rcv = recv_msg(sender)
 
     if addr == 'srv':
         addr = 'cli_KEY'
@@ -150,13 +162,19 @@ def decrypt_and_recieve(addr,sender):
         cu += 1
     a.close()
 
+    tmp = []
+    for i in duals.split(' '):
+        try:
+            tmp.append(int(i))
+        except ValueError:
+            pass
+    duals = tmp
+
     cu = 0
     dec = ''
 
-    #print(rcv,duals,decypher)
-
     while cu < len(rcv):
-        if str(cu) in duals:
+        if cu in duals:
             dec += decypher[rcv[cu]+rcv[cu+1]]
             cu += 1
         else:

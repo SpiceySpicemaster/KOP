@@ -1,14 +1,15 @@
 #!/usr/bin/python3
 import random
+from time import sleep
 from useful import ASCIIchars
-from Top_sneaky_v4m import create_key,encrypt_and_send,decrypt_and_recieve
+from Top_sneaky_v4m import create_key,encrypt_and_send,decrypt_and_recieve,recv_msg,send_msg
 from socket import *
 from hashlib import *
 from threading import *
 
 haram_chars = [';','\n',',']
-normal_commands = ['show_users','login','logout','add_usr','msg']
-admin_commands = ['show_all_users','purge_all','terminate','eval']
+normal_commands = ['help','show_online_users','login','logout','add_usr','msg']
+admin_commands = ['show_all_users','purge_all','terminate','eval','give_admin']
 logged_in = {}
 session_keys = {} #Important, they don't expire! Might implement it later.
 
@@ -23,19 +24,6 @@ try:
 except:
     file = open('admins.txt', 'w')
 file.close()
-
-
-def recv_msg(c):
-    padding = int(c.rcv(32).decode())
-    rcvd_msg = ''
-
-    while padding != 0:
-        tmp = c.recv(256).decode()
-        padding -= len(tmp)
-        rcvd_msg += tmp
-    return rcvd_msg
-
-
 
 def generate_key(seed,name):
     key, duals = create_key(ASCIIchars(), seed)
@@ -109,37 +97,30 @@ def main():
         return_msg = ''
         print('Received connection from: '+str(addr))
 
-        greeting_message = c.recv(512).decode()
+        greeting_message = recv_msg(c)
 
         if addr not in session_keys.keys() or greeting_message == 'new session':
             print('New session')
-            c.send('new session'.encode())
+            send_msg(c,'new session')
 
             g = 2
             p = random.randint(2 ** 2000, 2 ** 4000)
             a = random.randint(100, 1000)
             A = (g ** a) % p
 
-            c.send(str(g).encode())
-            print(g)
-            print()
-            c.send(str(p).encode())
-            print(p)
-            print()
-            c.send(str(A).encode())
-            print(A)
-            print()
-            B = int(c.recv(10000).decode())
-            print(B)
-            print()
+            send_msg(c,str(g))
+            send_msg(c,str(p))
+            send_msg(c,str(A))
+            B = int(recv_msg(c))
+
 
             session_keys[addr] = (B**a) % p
-            print(session_keys[addr])
+            #print(g, p , B, session_keys[addr],sep='\n')
             generate_key(session_keys[addr],addr)
 
         else:
             print('Session in progress')
-            c.send('ok'.encode())
+            send_msg(c,'ok')
 
         cmd = decrypt_and_recieve(addr,c)
         print('Command recived: ',cmd)
@@ -170,14 +151,35 @@ def main():
             elif cmd == 'eval':
                 eval(decrypt_and_recieve(addr,c).encode())
 
+            elif cmd == 'give_admin':
+                encrypt_and_send('Username of the account: ',addr,c)
+                usr = decrypt_and_recieve(addr,c)
+                if usr in giv_users() and is_admin(usr) == False:
+                    a = open('admins.txt','a')
+                    a.write(';'+usr)
+                    a.close()
+                    encrypt_and_send('Success!',addr,c)
+                elif usr not in giv_users():
+                    encrypt_and_send('Username not found!', addr, c)
+                elif usr in giv_users() and is_admin(usr) == True:
+                    encrypt_and_send('User is already an Admin!', addr, c)
+                else:
+                    encrypt_and_send('!fallback_error_msg! how did you even get here?', addr, c)
+
+
         elif cmd in admin_commands:
             encrypt_and_send("You don't have administrative rights!",addr,c)
 
         else:
             encrypt_and_send('ok',addr,c)
 
-            if cmd == 'show_users':
+            if cmd == 'show_online_users':
                 encrypt_and_send('\n'.join(logged_in),addr,c)
+
+            elif cmd == 'help':
+                encrypt_and_send(' Normal user command: '+' '.join(normal_commands)+'\n Admin commands: '+
+                ' '.join(admin_commands)+' \n You do not give arguments right away, just type the command in, and then'
+                ' the program will prompt you for them!',addr,c)
 
             elif cmd == 'msg':
                 users = giv_users()
@@ -287,8 +289,7 @@ def main():
                     encrypt_and_send('You are not logged in.',addr,c)
 
             else:
-                encrypt_and_send('Invalid command!',addr,c)
-
+                encrypt_and_send('Invalid command! Type "help" to get help!',addr,c)
 
         c.close()
 
