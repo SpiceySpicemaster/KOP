@@ -65,6 +65,7 @@ def return_user(addr):
         return list(logged_in.keys())[c]
     except IndexError or ValueError:
         return False
+
 def is_admin(usr):
     # If there are no admins yet it always returns True!
 
