@@ -69,15 +69,14 @@ def return_user(addr):
 def is_admin(usr):
     # If there are no admins yet it always returns True!
 
-    if usr == False:
-        return False
     file = open('admins.txt','r')
-    admins = file.readline().strip()
-    if admins == '':
+    admins = file.readline().strip().split(';')
+    file.close()
+    if len(admins) == 1:
         return True
-    admins.split(';')
-
-    if usr in admins:
+    elif usr == False:
+        return False
+    elif usr in admins:
         return True
     else:
         return False
@@ -159,7 +158,12 @@ def main():
             elif cmd == 'give_admin':
                 encrypt_and_send('Username of the account: ',addr,c)
                 usr = decrypt_and_recieve(addr,c)
-                if usr in giv_users() and is_admin(usr) == False:
+
+                file = open('admins.txt', 'r')
+                admins = file.readline().strip().split(';')
+                file.close()
+
+                if (usr in giv_users() and is_admin(usr) == False) or (len(admins) == 1):
                     a = open('admins.txt','a')
                     a.write(';'+usr)
                     a.close()
@@ -184,7 +188,8 @@ def main():
             elif cmd == 'help':
                 encrypt_and_send(' Normal user command: '+' '.join(normal_commands)+'\n Admin commands: '+
                 ' '.join(admin_commands)+' \n You do not give arguments right away, just type the command in, and then'
-                ' the program will prompt you for them!',addr,c)
+                ' the program will prompt you for them!\n If there are no admin accounts yet, the system will'
+                ' consider anybody an admin!',addr,c)
 
             elif cmd == 'msg':
                 users = giv_users()
