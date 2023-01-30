@@ -6,6 +6,8 @@ from tkinter import filedialog
 from decimal import *
 getcontext().prec = 10000000000000000
 
+# vx == Version X
+# m == Modular version
 # v3 feature - Seedable key generation, hopefully good (probs not tho lol)
 # v4 reature - Special characters like \t \n ect. don't fuck up the program anymore
 def recv_msg(c,debug=0):
