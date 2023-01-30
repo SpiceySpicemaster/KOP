@@ -25,6 +25,18 @@ except:
 file.close()
 
 
+def recv_msg(c):
+    padding = int(c.rcv(32).decode())
+    rcvd_msg = ''
+
+    while padding != 0:
+        tmp = c.recv(256).decode()
+        padding -= len(tmp)
+        rcvd_msg += tmp
+    return rcvd_msg
+
+
+
 def generate_key(seed,name):
     key, duals = create_key(ASCIIchars(), seed)
     c = open(str(name)+'.txt', 'w')
