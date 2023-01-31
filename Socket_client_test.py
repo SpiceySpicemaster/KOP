@@ -3,7 +3,6 @@ import random
 from useful import ASCIIchars
 from Top_sneaky_v4m import create_key,encrypt_and_send,decrypt_and_recieve,recv_msg,send_msg
 from socket import *
-from time import sleep
 
 ip = 'localhost'
 port = 1200
@@ -56,7 +55,6 @@ try:
         if cmd == '':
             cmd = 'A'
 
-        sleep(0.5)
         encrypt_and_send(cmd,'srv',s)
 
         a = decrypt_and_recieve('srv',s)
@@ -70,7 +68,7 @@ try:
             print(decrypt_and_recieve('srv',s))
 
         elif cmd == 'eval':
-            encrypt_and_send('Input python code: ','srv',s)
+            encrypt_and_send(input('Input python code: '),'srv',s)
 
         elif cmd == 'give_admin':
             print(decrypt_and_recieve('srv',s))

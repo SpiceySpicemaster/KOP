@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 import random
-from time import sleep
 from useful import ASCIIchars
 from Top_sneaky_v4m import create_key,encrypt_and_send,decrypt_and_recieve,recv_msg,send_msg
 from socket import *
@@ -214,6 +213,10 @@ def main():
                     encrypt_and_send("Username does not exist!",addr,c)
 
             elif cmd == 'login':
+                if address_is_online(addr):
+                    wrong = 1
+                    return_msg = 'You are already logged in'
+
                 encrypt_and_send('Please enter your username:',addr,c)
                 usr = decrypt_and_recieve(addr,c)
 
@@ -223,6 +226,8 @@ def main():
                 for i in haram_chars:
                     if i in pw:
                         wrong = 1
+
+
 
                 if wrong == 0:
                     file = open('users.txt','r')
@@ -239,15 +244,6 @@ def main():
                     elif (str(sha256(str(pw).encode()).hexdigest()).strip() != users[usr].strip()):
                         wrong = 1
                         return_msg = 'Wrong password'
-
-                    elif usr in logged_in:
-                        wrong = 1
-                        return_msg = 'User already logged in'
-
-                    elif address_is_online(addr):
-                        wrong = 1
-                        return_msg = 'You are already logged in'
-
 
                 if wrong == 1:
                     encrypt_and_send(return_msg,addr,c)
